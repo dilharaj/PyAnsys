@@ -223,7 +223,9 @@ tempCodeRunnerFile.py
 .out
 .pmdb
 .wft
-
+cases/
+__pycache__/
+test/
 
 
 # Marimo
