@@ -209,6 +209,23 @@ tempCodeRunnerFile.py
 # PyPI configuration file
 .pypirc
 
+# Fluent data files
+.msh.h5
+.cas.h5
+.log
+.bat
+.sf
+.dat
+.csv
+.png
+.txt
+.dsco
+.out
+.pmdb
+.wft
+
+
+
 # Marimo
 marimo/_static/
 marimo/_lsp/
