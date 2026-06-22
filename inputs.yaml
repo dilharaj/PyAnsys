@@ -1,0 +1,65 @@
+### This is the input yaml file that contains the inputs and bounds of variable parameters and constants to configre the optimization problem.
+
+# opt_8 is based on opt_7-case_478 
+Optimization:
+  npop: 32 # Population size
+  niter: 20  # Number of generations
+  nproc_mesh: 1  # Number of processors
+  nproc_cfd: 1  # Number of processors for CFD solver
+  root_folder: D:\Ansys\cases\opt_8
+  gui: False # Use GUI for meshing and solver
+  gpu_cfd: True  # Use GPU for CFD solver
+  fluent_niter: 300  # Number of iterations for Fluent solver
+  fluent_nloops: 3  # Number of loops tof thrust convergence
+
+General:
+  Density: 1.225 # density in kg/m3
+  Mu: 1.789e-5 # dynamic viscosity in Pas
+  Vinf: 0 # freestream velocity in m/s
+  Thrust: 12700 # target thrust in N
+
+Rotor:
+  R: 0.75   # rotor radius in m
+  RPM: 3000
+  TP_type: 3 # 1: constant taper, 2: chord defined by AR at Air_loc, 3: same as 2 except scaled to maintain solidity
+  TW_type: 2
+  Nb: [17,19] # done
+  Solidity: [0.5,0.5] #done
+  Rcout: [0.15,0.25] # root cutout
+  Taper: [1.4,1.4]
+  Twist: [40,54] #done
+  Theta75: [40,45] # collective at 75% span #done
+  Air_loc: [0,0.7,1] # airfoil and aspec ratio definition span locations (0 at center, 1 at R_tip)
+  Air_thick_max: [15,10,9] # airfoil thickness
+  Air_thick_min: [15,10,9]
+  Air_camber_max: [7,3,4] # airfoil camber
+  Air_camber_min: [7,3,4]
+  AR_max: [5,6,5]  # aspect ratio for TP_type=2
+  AR_min: [5,6,5]
+  SW_min: [0,0,0]  # Sweep for TP_type=2 (defined by chords moving forward) (forward +; backward -)
+  SW_max: [0,0.0,0.0]
+
+Duct:
+  Length: [0.5,1.5] # fraction of rotor radius
+  Width: [0.2,0.3] # fraction of rotor radius
+  In_exp: [1.1,1.3] # inlet expansion
+  Out_exp: [1.1,1.3] # outlet expansion
+
+Hub:
+  Length: [0.5,1.5] # fraction of rotor radius
+
+Stator:
+  Nb: [6,6]
+  Solidity: [0.35,0.35]
+  Taper: [1,1]
+  Twist: [10,10]
+  Theta75: [80,80]
+  Air_loc: [0,0.7,1]
+  Air_thick_min: [12,12,12]
+  Air_thick_max: [12,12,12]
+  Air_camber_min: [6,6,6]
+  Air_camber_max: [6,6,6]
+  Rake: [25,25] # rake angle in deg. (+ is downward rake)
+  Clearance: [0.17,0.17] # spacing between rotor and stator at rotor root cutout as a fraction of hub length 
+
+
