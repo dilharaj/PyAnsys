@@ -29,9 +29,9 @@ def run_geo(variables,constants,case_folder,id,istator=False):
     print(f"Folder created: {case_folder}")
    
 
+    parent_folder = os.path.dirname(case_folder)
     
-    
-    rotor = Rotor(variables,constants,id)
+    rotor = Rotor(variables,constants,id,parent_folder)
     duct = Duct(variables,constants,id)
     hub = Hub(variables,constants,id)
 
@@ -50,8 +50,8 @@ def run_geo(variables,constants,case_folder,id,istator=False):
 
     else:
         stator = None
-        blade_zmax = min(1.5*max(rotor.chord),min(duct.xz[:,1],hub.xz[:,1]))
-        blade_z_min = -1.5*max(rotor.chord)
+        blade_zmax = min(1.3*max(rotor.chord)*0.25,min(max(duct.xz[:,1])*0.95,max(hub.xz[:,1])*0.95))
+        blade_zmin = -1.5*max(rotor.chord)
         
 
     blade_lims = [blade_zmax, blade_zmin]
@@ -307,7 +307,7 @@ def make_discovery_script(rotor,duct,hub,case_folder,blade_lims,istator=False,st
 
     geo_file0 = f"{case_folder}\\geo0.dsco"
     if os.path.exists(geo_file0):
-        print("Ovewriting")
+        print("Overwriting geo0.dsco")
         os.remove(geo_file0)
     file.write(f"# Save Project As\nFile.SaveAs(r\"{geo_file0}\")\n")
 
@@ -411,7 +411,7 @@ def make_discovery_script(rotor,duct,hub,case_folder,blade_lims,istator=False,st
 
     log_file = f"{case_folder}\\log.dat"
     if os.path.exists(log_file):
-        print("Ovewriting")
+        print("Overwriting log.dat")
         os.remove(log_file)
 
     file.write(f"lf = open(r\"{log_file}\",\"w\")\n")
@@ -740,7 +740,7 @@ def make_discovery_script(rotor,duct,hub,case_folder,blade_lims,istator=False,st
 
     geo_file = f"{case_folder}\\geo.dsco"
     if os.path.exists(geo_file):
-        print("Ovewriting")
+        print("Overwriting geo.dsco")
         os.remove(geo_file)
     file.write(f"# Save Project As\nFile.SaveAs(r\"{geo_file}\")\n")
 
@@ -757,10 +757,10 @@ def make_discovery_script(rotor,duct,hub,case_folder,blade_lims,istator=False,st
         fluent_file_near = f"{case_folder}\\case_near.pmdb"
         fluent_file_off = f"{case_folder}\\case_off.pmdb"
         if os.path.exists(fluent_file_near):
-            print("Ovewriting")
+            print("Overwriting case_near.pmdb")
             os.remove(fluent_file_near)
         if os.path.exists(fluent_file_off):
-            print("Ovewriting")
+            print("Overwriting case_off.pmdb")
             os.remove(fluent_file_off)
         file.write(
             'simulation = Solution.Simulation.GetByLabel("Simulation 1")\n'
@@ -788,7 +788,7 @@ def make_discovery_script(rotor,duct,hub,case_folder,blade_lims,istator=False,st
     else:
         fluent_file = f"{case_folder}\\case.pmdb"
         if os.path.exists(fluent_file):
-            print("Ovewriting")
+            print("Overwriting case.pmdb")
             os.remove(fluent_file)
         file.write(f"Workbench.Fluent.ExportPMDB(r\"{fluent_file}\")\n")
         
@@ -796,7 +796,7 @@ def make_discovery_script(rotor,duct,hub,case_folder,blade_lims,istator=False,st
 
     fluent_file = f"{case_folder}\\case.pmdb"
     if os.path.exists(fluent_file):
-        print("Ovewriting")
+        print("Overwriting case.pmdb")
         os.remove(fluent_file)
     file.write(f"Workbench.Fluent.ExportPMDB(r\"{fluent_file}\")\n")
 
@@ -886,7 +886,7 @@ def make_custom_discovery_script(case_folder,input_geo_file):
 
     geo_file0 = f"{case_folder}\\geo0.dsco"
     # if os.path.exists(geo_file0):
-    #     print("Ovewriting")
+    #     print("Overwriting")
     #     os.remove(geo_file0)
     file.write(f"# Save Project As\nFile.SaveAs(r\"{geo_file0}\")\n")
 
@@ -936,7 +936,7 @@ def make_custom_discovery_script(case_folder,input_geo_file):
 
     log_file = f"{case_folder}\\log.dat"
     # if os.path.exists(log_file):
-    #     print("Ovewriting")
+    #     print("Overwriting")
     #     os.remove(log_file)
 
     file.write(f"lf = open(r\"{log_file}\",\"w\")\n")
@@ -1101,13 +1101,13 @@ def make_custom_discovery_script(case_folder,input_geo_file):
     
     geo_file = f"{case_folder}\\geo.dsco"
     # if os.path.exists(geo_file):
-    #     print("Ovewriting")
+    #     print("Overwriting")
     #     os.remove(geo_file)
     file.write(f"# Save Project As\nFile.SaveAs(r\"{geo_file}\")\n")
     
     fluent_file = f"{case_folder}\\case.pmdb"
     # if os.path.exists(fluent_file):
-    #     print("Ovewriting")
+    #     print("Overwriting")
     #     os.remove(fluent_file)
     file.write(f"Workbench.Fluent.ExportPMDB(r\"{fluent_file}\")\n")
     

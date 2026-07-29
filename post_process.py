@@ -6,7 +6,8 @@ import subprocess
 
 from scipy.interpolate import interp1d
 
-os.environ["ACUM_EXECUTABLE_PATH"] = r"Z:\UFX_dilhara\ACUM_periodic\ACUM3_periodic\acum_cuda"
+os.environ["ACUM_EXECUTABLE_PATH"] = r"F:\Dilhara\ACUM\ACUM3_periodic\acum_cuda" #r"Z:\UFX_dilhara\ACUM_periodic\ACUM3_periodic\acum_cuda"
+#os.environ["ACUM_EXECUTABLE_PATH"] = r"Z:\UFX_dilhara\ACUM_periodic\ACUM3_periodic\acum_cuda"
     
 # constants for post-processing
 P_REF = 20e-6  # Reference Pressure in Pa
@@ -147,7 +148,9 @@ def post_process(rpm,radius,case_folder,rr,rtheta,istator=0,rs=None,stheta=None)
     file.close()
 
     plot_blade_data(rotor,case_folder)
-    plot_blade_data(stator,case_folder)
+
+    if istator:
+        plot_blade_data(stator,case_folder)
 
 
 
@@ -610,7 +613,7 @@ def run_acoustics(case_folder,omega,R,B):
     with open(f_input, 'w') as f:
         f.write("***Environmental\n")
         f.write(f"a0             	{A0}\n")
-        f.write(f"rhoref          {RHO_REF}\n")
+        f.write(f"rhoRef          {RHO_REF}\n")
         f.write("pRef            101325\n")
         f.write("\n***Geometric\n")
         f.write(f"oM              {omega}\n")
@@ -662,9 +665,9 @@ def run_acoustics(case_folder,omega,R,B):
         ny[i] = -float(data[i+1][7])/float(data[i+1][5])
         nz[i] = -float(data[i+1][8])/float(data[i+1][5])
 
-    surface_folder = rf"{acoustics_folder}/surfaces"
-    if surface_folder not in os.listdir(acoustics_folder):
-        os.makedirs(surface_folder)
+    surface_folder = os.path.join(acoustics_folder, "surfaces")
+    #if surface_folder not in os.listdir(acoustics_folder):
+    os.makedirs(surface_folder,exist_ok=True)
 
     f_surface = os.path.join(surface_folder, "surface_1.dat")
 
@@ -707,17 +710,61 @@ def run_acoustics(case_folder,omega,R,B):
     if os.path.exists(fpT):
         os.remove(fpT)
 
+
+    # --- FIX: Convert Windows paths to WSL paths ---
+    def win_to_ubuntu_path(win_path):
+        # Standardize backslashes
+        clean_path = os.path.abspath(win_path)
+        print(f"Converting Windows path: {win_path} to WSL path: {clean_path}") 
+        # Use WSL's built-in conversion utility
+        res = subprocess.run(["wsl", "wslpath", "-a", clean_path], capture_output=True, text=True)
+        return res.stdout.strip()
+
+    from pathlib import PureWindowsPath
+    def windows_to_wsl_path(windows_path: str) -> str:
+        """
+        Convert a Windows path (e.g., C:\\Users\\Alice\\file.txt)
+        to a WSL/Ubuntu path (e.g., /mnt/c/Users/Alice/file.txt).
+        """
+        p = PureWindowsPath(windows_path)
+        drive = p.drive.rstrip(":").lower()
+
+        if not drive:
+            raise ValueError("Input must be an absolute Windows path with a drive letter.")
+
+        return f"/mnt/{drive}/" + "/".join(p.parts[1:])
+
+
+    wsl_acum_exec = windows_to_wsl_path(acum_executable_path)
+    wsl_acoustics_dir = windows_to_wsl_path(acoustics_folder)
+
+    # print(f"Running ACUM executable:{acum_executable_path} in directory: {acoustics_folder}")
+    # print(f"Running ACUM executable: {wsl_acum_exec} in directory: {wsl_acoustics_dir}")
+
     cmd = [
         "wsl",
-        acum_executable_path,
+        "bash",
+        "-c",
+        f"cd '{wsl_acoustics_dir}' && '{wsl_acum_exec}'"
     ]
 
     result = subprocess.run(
         cmd,
-        cwd=acoustics_folder,
         capture_output=True,
         text=True
     )
+
+    # cmd = [
+    #     "wsl",
+    #     acum_executable_path,
+    # ]
+
+    # result = subprocess.run(
+    #     cmd,
+    #     cwd=acoustics_folder,
+    #     capture_output=True,
+    #     text=True
+    # )
 
     print(result.stdout)
     print(result.stderr)

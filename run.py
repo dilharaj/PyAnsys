@@ -46,7 +46,7 @@ def run_default(variables, const, case_folder,id,skip_acum,achieve_T_target):
         shutil.copyfile(rf"{parent_folder}/inputs.yaml", rf"{case_folder}/inputs.yaml")
 
     
-    script_file = run_geo(variables,const,case_folder,id)
+    script_file, blade_lims, rotor, stator = run_geo(variables,const,case_folder,id)
 
     modeler = launch_modeler(mode='discovery')
     print(modeler)
@@ -59,22 +59,20 @@ def run_default(variables, const, case_folder,id,skip_acum,achieve_T_target):
     mesh_file = run_mesh(variables, const, case_folder, id)
 
 
-    T_total, T_blade, T_duct, T_hub, Q, omega, P, FM, DL, PL, OF_out = run_solve(variables, const, case_folder, id, achieve_T_target)
+    T_total, T_blade, T_duct, T_hub, T_stator, Q, omega, P, FM, DL, PL, OF_out = run_solve(variables, const, case_folder, id, achieve_T_target, blade_lims, skip_acum=skip_acum, istator=False, solver=None)
 
     prop_eff = T_total * const[id.vinf] / P
 
     # Structural design
-    from classes import Rotor
-    rotor = Rotor(variables,const,id)
     crotor = Rotor_structure(variables[id.rnb], variables[id.rcout]*const[id.r], const[id.r], omega*60/(2*np.pi), T_blade)
     celem  = Elem(rotor.nr, rotor.r*rotor.R_tip, rotor.theta, rotor.chord)
     cstr   = Str(rotor.air_thick[0])
 
     # Code
     ytip, feas  = structural_design(crotor, celem, cstr)
-    print("Tip deflection (mm):", ytip)
+    print(f"Tip deflection (mm): {ytip:.2f}")
     OF = OF_out
-    print("Objective Function:", OF)
+    print(f"Objective Function: {OF:.2f}")
     duct_share = T_duct/T_total
 
     mesh_file = rf"{case_folder}\\mesh.msh.h5"
@@ -88,7 +86,7 @@ def run_default(variables, const, case_folder,id,skip_acum,achieve_T_target):
     rpm = omega*60/(2*np.pi)
     mtip = omega*rotor.R_tip/A0
         
-    print(f"Total Thrust: {T_total:.2f} N\nBlade Thrust: {T_blade:.2f} N\nDuct Thrust: {T_duct:.2f} N\nHub Thrust: {T_hub:.2f} N\nTorque: {Q:.2f} Nm\nRPM: {rpm:.2f} RPM\nMtip: {mtip}\nPower: {P:.2f} W\nFigure of Merit: {FM:.3f}\nDisk Loading: {DL:.2f} kg/m^2\nPower Loading: {PL:.2f} kg/kW\nPropulsive Efficiency: {prop_eff*100:.2f}%\nDuct Share: {duct_share*100:.2f}%")
+    print(f"Total Thrust: {T_total:.2f} N\nBlade Thrust: {T_blade:.2f} N\nDuct Thrust: {T_duct:.2f} N\nHub Thrust: {T_hub:.2f} N\nTorque: {Q:.2f} Nm\nRPM: {rpm:.2f} RPM\nMtip: {mtip:.2f}\nPower: {P:.2f} W\nFigure of Merit: {FM:.3f}\nDisk Loading: {DL:.2f} kg/m^2\nPower Loading: {PL:.2f} kg/kW\nPropulsive Efficiency: {prop_eff*100:.2f}%\nDuct Share: {duct_share*100:.2f}%")
 
 
      ## post-process
@@ -96,6 +94,7 @@ def run_default(variables, const, case_folder,id,skip_acum,achieve_T_target):
     post_process(rpm, const[id.r], case_folder, rotor.r, rotor.theta)
     
     if skip_acum == 0:
+        omega = 10000/60*2*np.pi
         mean_OASPL, mean_OASPL_A, max_OASPL, max_OASPL_A = run_acoustics(case_folder, omega, rotor.R_tip, rotor.Nb)
     else:
         mean_OASPL = 0
@@ -204,7 +203,7 @@ def run_cruise_sweep(variables, const, case_folder,id,skip_acum, RPM):
             else:
                 variables[(ivarient-1)//2] *= 1.1
     
-        script_file = run_geo(variables,const,case_folder,id)
+        script_file, blade_lims, rotor, stator = run_geo(variables,const,case_folder,id)
 
         
         print("#### script file",script_file)
@@ -234,8 +233,6 @@ def run_cruise_sweep(variables, const, case_folder,id,skip_acum, RPM):
 
 
         # Structural design
-        from classes import Rotor
-        rotor = Rotor(variables,const,id)
         crotor = Rotor_structure(variables[id.rnb], variables[id.rcout]*const[id.r], const[id.r], omega*60/(2*np.pi), T_blade)
         celem  = Elem(rotor.nr, rotor.r*rotor.R_tip, rotor.theta, rotor.chord)
         cstr   = Str(rotor.air_thick[0])

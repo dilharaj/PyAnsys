@@ -6,7 +6,7 @@ import numpy as np
 import concurrent.futures
 import ansys.fluent.core as pyfluent
 
-def run_solve(variables, const, case_folder, id, achieve_T_target, blade_lims, istator=False, solver=None):
+def run_solve(variables, const, case_folder, id, achieve_T_target, blade_lims, skip_acum=True, istator=False, solver=None):
 
 
     n_out = 12  # Number of outputs
@@ -59,7 +59,7 @@ def run_solve(variables, const, case_folder, id, achieve_T_target, blade_lims, i
 
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        future = executor.submit(run_case, solver, variables, const, case_folder, fluent_niter, fluent_nloops, gpu_cfd, mode, id, achieve_T_target, blade_lims, istator)
+        future = executor.submit(run_case, solver, variables, const, case_folder, fluent_niter, fluent_nloops, gpu_cfd, mode, id, achieve_T_target, skip_acum, blade_lims, istator)
         try:
             T_total, T_blade, T_duct, T_hub, T_stator, Q, omega, P, FM, DL, PL, OF_out = future.result(timeout=12000) # Wait for up to 200 minutes
         except Exception as e:
@@ -87,7 +87,7 @@ def read_params(filename):
 
 
 
-def run_case(solver,var,const,case_folder,niter_fluent,nloops,gpu_cfd,mode,id,achieve_T_target, blade_lims, istator=False):
+def run_case(solver,var,const,case_folder,niter_fluent,nloops,gpu_cfd,mode,id,achieve_T_target, skip_acum, blade_lims, istator=False):
 
 
     
@@ -525,12 +525,13 @@ def run_case(solver,var,const,case_folder,niter_fluent,nloops,gpu_cfd,mode,id,ac
                                             cell_func_domain = ['density', 'pressure', 'wall-shear', 'x-wall-shear', 'y-wall-shear', 'z-wall-shear','face-area-magnitude', 'x-face-area', 'y-face-area', 'z-face-area'], 
                                             location = 'cell-center'
                                             )
-            # solver.settings.file.export.ascii(file_name = f"{case_folder}\\surface_acum.dat", 
-            #                                   surface_name_list = ["blade1", "blade2","duct1","duct2","hub1","hub2"], 
-            #                                   delimiter = 'comma', 
-            #                                   cell_func_domain = ['pressure','face-area-magnitude', 'x-face-area', 'y-face-area', 'z-face-area'], 
-            #                                   location = 'cell-center'
-            #                                   )
+            if not skip_acum:
+                solver.settings.file.export.ascii(file_name = f"{case_folder}\\surface_acum.dat", 
+                                                surface_name_list = ["blade1", "blade2","duct1","duct2","hub1","hub2"], 
+                                                delimiter = 'comma', 
+                                                cell_func_domain = ['pressure','face-area-magnitude', 'x-face-area', 'y-face-area', 'z-face-area'], 
+                                                location = 'cell-center'
+                                                )
         else:
             solver.settings.file.export.ascii(file_name = f"{case_folder}\\surface.dat", 
                                             surface_name_list = ["blade1"], 
@@ -539,13 +540,13 @@ def run_case(solver,var,const,case_folder,niter_fluent,nloops,gpu_cfd,mode,id,ac
                                             location = 'cell-center'
                                             )
 
-  
-        # solver.settings.file.export.ascii(file_name = f"{case_folder}\\surface_acum.dat", 
-        #                                   surface_name_list = ["blade1","duct1","duct2","hub1","hub2"], 
-        #                                   delimiter = 'comma', 
-        #                                   cell_func_domain = ['pressure','face-area-magnitude', 'x-face-area', 'y-face-area', 'z-face-area'], 
-        #                                   location = 'cell-center'
-        #                                   )
+            if not skip_acum:
+                solver.settings.file.export.ascii(file_name = f"{case_folder}\\surface_acum.dat", 
+                                                surface_name_list = ["blade1","duct1","duct2","hub1","hub2"], 
+                                                delimiter = 'comma', 
+                                                cell_func_domain = ['pressure','face-area-magnitude', 'x-face-area', 'y-face-area', 'z-face-area'], 
+                                                location = 'cell-center'
+                                                )
         
 
     if istator:

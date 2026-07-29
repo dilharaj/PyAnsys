@@ -64,7 +64,7 @@ def run_mesh(variables, const, case_folder, id, istator=False):
     file.close()
     return mesh_file
 
-def make_mesh(meshing,in_file,out_file,alpha_per,mode,R_tip,istator):
+def make_mesh(meshing,in_file,out_file,alpha_per,mode,R_tip,istator=False):
 
     alpha_per_near = 10
 

@@ -7,6 +7,7 @@ from scipy.interpolate import CubicSpline
 import matplotlib.pyplot as plt
 import yaml
 import sys
+import os
 
 class Input:
     def __init__(self,inputs_file):
@@ -255,7 +256,7 @@ class ID:
 
         for i in range(self.nsair):
             self.vmin[self.sair_thick[i]] = self.inputs.Stator_Air_thick_min[i]
-        for i in range(self.nrair):
+        for i in range(self.nsair):
             self.vmin[self.sair_camber[i]] = self.inputs.Stator_Air_camber_min[i]
 
         self.vmin[self.srake] = self.inputs.Stator_Rake[0]
@@ -297,7 +298,7 @@ class ID:
 
         for i in range(self.nsair):
             self.vmax[self.sair_thick[i]] = self.inputs.Stator_Air_thick_max[i]
-        for i in range(self.nrair):
+        for i in range(self.nsair):
             self.vmax[self.sair_camber[i]] = self.inputs.Stator_Air_camber_max[i]
         self.vmax[self.srake] = self.inputs.Stator_Rake[1]
         self.vmax[self.sclear] = self.inputs.Stator_Clearance[1]
@@ -322,7 +323,7 @@ class ID:
 
 
 class Rotor:
-    def __init__(self,vars,consts,id):
+    def __init__(self,vars,consts,id, parent_folder):
 
         # Inputs
         self.R_tip = consts[id.r]   # rotor radius
@@ -431,9 +432,52 @@ class Rotor:
             self.theta[0] = 90 + dtheta_75
 
         elif self.TW_type == 4: # custom twist definition
-            x0 = [0, 0.2, 0.4, 0.6, 0.8, 1.1]
-            theta0 = [95, 75, 59, 50, 43, 36]
 
+            x0 = []
+            theta0 = []
+
+            blade_file = os.path.join(parent_folder, "blade.txt")
+            with open(blade_file, "r") as file:
+                # Skip the header line
+                next(file)
+
+                for line in file:
+                    # Strip whitespace and ignore empty lines
+                    line = line.strip()
+                    if not line:
+                        continue
+
+                    # Split on comma (or space/tab)
+                    # Use line.split() if space/tab separated, or line.split(',') for comma-separated
+                    parts = line.replace(",", " ").split()
+
+                    x0.append(float(parts[0]))
+                    theta0.append(float(parts[2]))
+
+
+            # x0 = [0.00,
+            #         0.12,
+            #         0.22,
+            #         0.35,
+            #         0.47,
+            #         0.58,
+            #         0.70,
+            #         0.82,
+            #         1.00,
+            #         1.05
+            #         ]
+            # theta0 = [100.4,
+            #             87.0,
+            #             75.0,
+            #             64.0,
+            #             52.5,
+            #             44.0,
+            #             39.0,
+            #             36.0,
+            #             33.0,
+            #             32.0
+            #             ]
+            
             self.theta = np.interp(self.r,x0,theta0)  
 
             # plt.plot(self.r, self.theta, label="Pitch", color="blue", linestyle="--", marker="o")
@@ -486,7 +530,7 @@ class Rotor:
             cc = interpolate.splev(rr,tck)
             self.chord = np.interp(self.r,rr,cc)
 
-        elif self.TP_type == 2 or self.TP_type == 3: # based on aspect ratio defined at airfoil definition locations
+        else: # self.TP_type == 2 or self.TP_type == 3: # based on aspect ratio defined at airfoil definition locations
             
             cc = np.zeros(Nair,dtype=float)
             sw = np.zeros(Nair,dtype=float)
@@ -561,6 +605,58 @@ class Rotor:
                 self.chord[i] = min(self.chord[i],chord_Rcout)
             
                 #print(self.r[i],self.sweep[i])
+
+
+            if self.TP_type == 4:
+              
+                x0 = []
+                chord0 = []
+
+                blade_file = os.path.join(parent_folder, "blade.txt")
+                with open(blade_file, "r") as file:
+                    # Skip the header line
+                    next(file)
+
+                    for line in file:
+                        # Strip whitespace and ignore empty lines
+                        line = line.strip()
+                        if not line:
+                            continue
+
+                        # Split on comma (or space/tab)
+                        # Use line.split() if space/tab separated, or line.split(',') for comma-separated
+                        parts = line.replace(",", " ").split()
+
+                        x0.append(float(parts[0]))
+                        chord0.append(float(parts[1]))
+
+                # x0 = [0.00,
+                #         0.12,
+                #         0.22,
+                #         0.35,
+                #         0.47,
+                #         0.58,
+                #         0.70,
+                #         0.82,
+                #         1.00,
+                #         1.05
+                #         ]
+                # chord0 = [0.0271,
+                #         0.0269,
+                #         0.0266,
+                #         0.0261,
+                #         0.0257,
+                #         0.0251,
+                #         0.0243,
+                #         0.0236,
+                #         0.0225,
+                #         0.0223
+                #         ]
+                
+
+                self.chord = np.interp(self.r,x0,chord0)  
+
+        #    print("Rotor Chord Distribution:",self.chord)
                   
             # root_chord_max = self.R_root * math.sin(np.pi/self.Nb) * 2 / math.cos(self.Theta0*np.pi/180) * 0.7 #2*np.pi*self.R_root/self.Nb/math.cos(self.Theta0*np.pi/180) * 0.65 # maximum allowable chord at root to avoid overlap
             # chord0_max = self.R_root/(0.75*abs(math.cos(self.theta[0]*np.pi/180))) * 0.5 # max allowable chord at r=0

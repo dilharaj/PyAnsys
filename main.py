@@ -11,10 +11,10 @@ from classes import ID, Rotor, Input
 if __name__ == "__main__":
 
 
-    mode = 3 # 0=default mode; 1=operating conditions sweep, geometry defined in a STEP file; 2= cruise optimization with 5% tweak in variables; 3= simulation with stator (CPU)
+    mode = 0 # 0=default mode; 1=operating conditions sweep, geometry defined in a STEP file; 2= cruise optimization with 5% tweak in variables; 3= simulation with stator (CPU)
     
     
-    skip_acum = 1 # skip acoustics
+    skip_acum = 0 # skip acoustics
     achieve_T_target = 0 # trim to target thrust or not
 
     parser = argparse.ArgumentParser(description="Process a YAML configuration file.")
