@@ -251,6 +251,7 @@ def run_case_cruise(solver,var,const,mesh_file,case_folder,niter_fluent,nloops,g
 
         #input("Simulation complete. Press Enter to continue...\n")
 
+
     rpm_pts = np.array(RPM)
     eff_pts = np.array(prop_eff_list)
     spline_func = CubicSpline(rpm_pts, eff_pts, bc_type='natural')

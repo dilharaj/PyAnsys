@@ -1,4 +1,4 @@
-from run import run_default, run_oc_sweep, run_cruise_sweep, run_cpu
+from run import run_default, run_oc_sweep, run_cruise_sweep, run_cpu, run_cruise_duct_sweep
 import os
 import sys
 import argparse
@@ -11,10 +11,10 @@ from classes import ID, Rotor, Input
 if __name__ == "__main__":
 
 
-    mode = 0 # 0=default mode; 1=operating conditions sweep, geometry defined in a STEP file; 2= cruise optimization with 5% tweak in variables; 3= simulation with stator (CPU)
+    mode = 4 # 0=default mode; 1=operating conditions sweep, geometry defined in a STEP file; 2= cruise optimization with 5% tweak in variables; 3= simulation with stator (CPU); 4= cruise duct sweep
     
     
-    skip_acum = 0 # skip acoustics
+    skip_acum = 1 # skip acoustics
     achieve_T_target = 0 # trim to target thrust or not
 
     parser = argparse.ArgumentParser(description="Process a YAML configuration file.")
@@ -99,5 +99,14 @@ if __name__ == "__main__":
     elif mode == 3: # CPU simulation with stator
 
         run_cpu(variables, const, case_folder, id, skip_acum, achieve_T_target)
+
+
+    elif mode == 4: # cruise duct sweep
+
+        # RPM needs to have at leat 2 values to properly interploate.
+        RPM = [7000, 9000, 11000, 13000, 15000]
+        
+        variables_max =  id.vmax
+        run_cruise_duct_sweep(variables, variables_max, const, case_folder,id,skip_acum, RPM)
 
 

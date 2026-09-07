@@ -35,7 +35,7 @@ def run_default(variables, const, case_folder,id,skip_acum,achieve_T_target):
     foutname = str(fout)
     if not os.path.exists(foutname):
         with open(foutname, "w") as f:
-            f.write("blade_count,root_cutout,solidity,twist,theta75,air_thick_1,air_thick_2,air_thick_3,air_camber_1,air_camber_2,air_camber_3,AR_1,AR_2,AR_3,SW_1,SW_2,SW_3,dout_exp,din_exp,dlength,dwidth,Vinf,T_total,T_blade,T_duct,T_hub,Q,omega,RPM,P,FM,Prop_eff,Ytip,DL,PL,OF,Duct_Share,OASPL_A_max,OASPL_A_mean\n")
+            f.write("case,blade_count,root_cutout,solidity,twist,theta75,air_thick_1,air_thick_2,air_thick_3,air_thick_4,air_camber_1,air_camber_2,air_camber_3,air_camber_4,AR_1,AR_2,AR_3,AR_4,SW_1,SW_2,SW_3,SW_4,dout_exp,din_exp,dlength,dwidth,Vinf,T_total,T_blade,T_duct,T_hub,Q,omega,RPM,P,FM,Prop_eff,Ytip,DL,PL,OF,Duct_Share,OASPL_A_max,OASPL_A_mean\n")
 
     with open(foutname, "r") as f:
         caseID = sum(1 for line in f)
@@ -46,12 +46,15 @@ def run_default(variables, const, case_folder,id,skip_acum,achieve_T_target):
         shutil.copyfile(rf"{parent_folder}/inputs.yaml", rf"{case_folder}/inputs.yaml")
 
     
+    if const[id.rtp_type] == 4 or const[id.rtw_type] == 4:
+        shutil.copyfile(rf"{parent_folder}/blade.txt", rf"{case_folder}/blade.txt")
+
     script_file, blade_lims, rotor, stator = run_geo(variables,const,case_folder,id)
 
     modeler = launch_modeler(mode='discovery')
     print(modeler)
     print("#### script file",script_file)
-
+    #input("Run the discovery script in Ansys Discovery, then press Enter to continue...\n")
     result = modeler.run_discovery_script_file(file_path=script_file)
 
     modeler.close()
@@ -109,9 +112,9 @@ def run_default(variables, const, case_folder,id,skip_acum,achieve_T_target):
     while True:
         try:
             with open(foutname, "a") as f:
-                f.write(f"{variables[id.rnb]},{variables[id.rcout]},{variables[id.rsolidity]},{variables[id.rtwist]},{variables[id.rtheta75]},{variables[id.rair_thick[0]]},{variables[id.rair_thick[1]]},{variables[id.rair_thick[2]]},"
-                f"{variables[id.rair_camber[0]]},{variables[id.rair_camber[1]]},{variables[id.rair_camber[2]]},{variables[id.rtaper[0]]},{variables[id.rtaper[1]]},{variables[id.rtaper[2]]},{variables[id.rsweep[0]]},"
-                f"{variables[id.rsweep[1]]},{variables[id.rsweep[2]]},{variables[id.dout_exp]},{variables[id.din_exp]},{variables[id.dlength]},{variables[id.dwidth]},{const[id.vinf]},{T_total},{T_blade},{T_duct},{T_hub},{Q},{omega},"
+                f.write(f"{caseID},{variables[id.rnb]},{variables[id.rcout]},{variables[id.rsolidity]},{variables[id.rtwist]},{variables[id.rtheta75]},{variables[id.rair_thick[0]]},{variables[id.rair_thick[1]]},{variables[id.rair_thick[2]]},{variables[id.rair_thick[3]]},"
+                f"{variables[id.rair_camber[0]]},{variables[id.rair_camber[1]]},{variables[id.rair_camber[2]]},{variables[id.rair_camber[3]]},{variables[id.rtaper[0]]},{variables[id.rtaper[1]]},{variables[id.rtaper[2]]},{variables[id.rtaper[3]]},{variables[id.rsweep[0]]},"
+                f"{variables[id.rsweep[1]]},{variables[id.rsweep[2]]},{variables[id.rsweep[3]]},{variables[id.dout_exp]},{variables[id.din_exp]},{variables[id.dlength]},{variables[id.dwidth]},{const[id.vinf]},{T_total},{T_blade},{T_duct},{T_hub},{Q},{omega},"
                 f"{rpm},{P},{FM},{prop_eff},{ytip},{DL},{PL},{OF},{duct_share},{max_OASPL_A},{mean_OASPL_A}\n"
                 )
             break
@@ -388,3 +391,112 @@ def run_cpu(variables, const, case_folder,id,skip_acum,achieve_T_target):
             input("Close output CSV file and Press Enter to save current varient...\n")
 
 
+
+
+
+def run_cruise_duct_sweep(variables, variables_max, const, case_folder,id,skip_acum, RPM):
+
+    skip_acum = 1 # overwrite
+    npts_inlet_expansion = 10
+    npts_outlet_expansion = 6
+    
+    fout = Path(case_folder) / "results.csv"
+    foutname = str(fout)
+    if not os.path.exists(foutname):
+        with open(foutname, "w") as f:
+            f.write("blade_count,root_cutout,solidity,twist,theta75,air_thick_1,air_thick_2,air_thick_3,air_camber_1,air_camber_2,air_camber_3,AR_1,AR_2,AR_3,SW_1,SW_2,SW_3,dout_exp,din_exp,dlength,dwidth,Vinf,T_total,T_blade,T_duct,T_hub,Q,omega,RPM,P,FM,Prop_eff,Ytip,DL,PL,OF,Duct_Share,OASPL_A_max,OASPL_A_mean\n")
+    
+    with open(foutname, "r") as f:
+        caseID0 = sum(1 for line in f)
+
+    parent_folder = case_folder
+    
+    modeler = launch_modeler(mode='discovery')
+    print(modeler)
+    
+    variables_min = copy.deepcopy(variables)
+    variables0 = copy.deepcopy(variables)
+    
+    for i_din in range(npts_inlet_expansion):
+        variables[id.din_exp] = variables_min[id.din_exp] + (variables_max[id.din_exp]-variables_min[id.din_exp])/(npts_inlet_expansion-1)*i_din
+        for i_dout in range(npts_outlet_expansion):
+            variables[id.dout_exp] = variables_min[id.dout_exp] + (variables_max[id.dout_exp]-variables_min[id.dout_exp])/(npts_outlet_expansion-1)*i_dout
+
+            ivarient = i_din*npts_outlet_expansion + i_dout
+    
+            caseID = caseID0 + ivarient
+            case_folder = os.path.join(parent_folder,f"case{caseID}")
+            if not os.path.exists(case_folder):
+                os.makedirs(case_folder)
+                
+    
+            script_file, blade_lims, rotor, stator = run_geo(variables,const,case_folder,id)
+
+            
+            print("#### script file",script_file)
+
+            result = modeler.run_discovery_script_file(file_path=script_file)
+
+    variables = copy.deepcopy(variables0)
+       
+    modeler.close()
+
+
+    for i_din in range(npts_inlet_expansion):
+        variables[id.din_exp] = variables_min[id.din_exp] + (variables_max[id.din_exp]-variables_min[id.din_exp])/(npts_inlet_expansion-1)*i_din
+        for i_dout in range(npts_outlet_expansion):
+            variables[id.dout_exp] = variables_min[id.dout_exp] + (variables_max[id.dout_exp]-variables_min[id.dout_exp])/(npts_outlet_expansion-1)*i_dout
+
+            ivarient = i_din*npts_outlet_expansion + i_dout
+        
+            caseID = caseID0 + ivarient
+            case_folder = os.path.join(parent_folder,f"case{caseID}")
+                
+    
+            mesh_file = run_mesh(variables, const, case_folder, id)
+
+
+            T_total, T_blade, T_duct, T_hub, Q, omega, P, FM, DL, PL, prop_eff = run_solve_cruise(variables, const, case_folder, id, RPM=RPM)
+
+
+            OF = P/T_total
+            print("Objective Function:", OF)
+            duct_share = T_duct/T_total
+
+            mesh_file = rf"{case_folder}\\mesh.msh.h5"
+            try:
+                os.remove(mesh_file)
+            except FileNotFoundError:
+                pass
+            except PermissionError:
+                print("File is in use and cannot be deleted.")
+            
+            rpm = omega*60/(2*np.pi)
+            mtip = omega*rotor.R_tip/A0
+                
+            print(f"Total Thrust: {T_total:.2f} N\nBlade Thrust: {T_blade:.2f} N\nDuct Thrust: {T_duct:.2f} N\nHub Thrust: {T_hub:.2f} N\nTorque: {Q:.2f} Nm\nRPM: {rpm:.2f} RPM\nMtip: {mtip}\nPower: {P:.2f} W\nFigure of Merit: {FM:.3f}\nDisk Loading: {DL:.2f} kg/m^2\nPower Loading: {PL:.2f} kg/kW\nPropulsive Efficiency: {prop_eff*100:.2f}%\nDuct Share: {duct_share*100:.2f}%")
+
+
+            ## Append to file
+
+            ytip = 0 # not calculated in this sweep
+            max_OASPL_A = 0 # not calculated in this sweep
+            mean_OASPL_A = 0 # not calculated in this sweep
+
+            
+            while True:
+                try:
+                    with open(foutname, "a") as f:
+                        f.write(f"{variables[id.rnb]},{variables[id.rcout]},{variables[id.rsolidity]},{variables[id.rtwist]},{variables[id.rtheta75]},{variables[id.rair_thick[0]]},{variables[id.rair_thick[1]]},{variables[id.rair_thick[2]]},"
+                        f"{variables[id.rair_camber[0]]},{variables[id.rair_camber[1]]},{variables[id.rair_camber[2]]},{variables[id.rtaper[0]]},{variables[id.rtaper[1]]},{variables[id.rtaper[2]]},{variables[id.rsweep[0]]},"
+                        f"{variables[id.rsweep[1]]},{variables[id.rsweep[2]]},{variables[id.dout_exp]},{variables[id.din_exp]},{variables[id.dlength]},{variables[id.dwidth]},{const[id.vinf]},{T_total},{T_blade},{T_duct},{T_hub},{Q},{omega},"
+                        f"{rpm},{P},{FM},{prop_eff},{ytip},{DL},{PL},{OF},{duct_share},{max_OASPL_A},{mean_OASPL_A}\n"
+                        )
+                    break
+                except Exception as e:
+                    print(f"Error writing to file: {e}")
+                    input("Close output CSV file and Press Enter to save current varient...\n")
+
+
+    variables = copy.deepcopy(variables0)
+    

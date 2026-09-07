@@ -546,19 +546,19 @@ class Rotor:
                 if self.r[i] < rAir_loc[0]:
                     self.chord[i] = cc[0]
                     self.sweep[i] = sw[0]
-                elif self.r[i] > rAir_loc[-1]:
-                    self.chord[i] = cc[-1]
-                    self.sweep[i] = sw[-1]
+                # elif self.r[i] > rAir_loc[-1]:
+                #     self.chord[i] = cc[-1]
+                #     self.sweep[i] = sw[-1]
                 else:
                     if Nair > 3:
-                        f_cubic = interp1d(rAir_loc,cc,kind='cubic')
+                        f_cubic = interp1d(rAir_loc,cc,kind='cubic', fill_value="extrapolate")
                         self.chord[i] = f_cubic(self.r[i])
-                        f_cubic = interp1d(rAir_loc,sw,kind='cubic')
+                        f_cubic = interp1d(rAir_loc,sw,kind='cubic', fill_value="extrapolate")
                         self.sweep[i] = f_cubic(self.r[i])
                     elif Nair == 3:
-                        f_cubic = interp1d(rAir_loc,cc,kind='quadratic')
+                        f_cubic = interp1d(rAir_loc,cc,kind='quadratic', fill_value="extrapolate")
                         self.chord[i] = f_cubic(self.r[i])
-                        f_cubic = interp1d(rAir_loc,sw,kind='quadratic')
+                        f_cubic = interp1d(rAir_loc,sw,kind='quadratic', fill_value="extrapolate")
                         self.sweep[i] = f_cubic(self.r[i]) 
                     elif Nair == 2:
                         self.chord[i] = np.interp(self.r[i],rAir_loc,cc)

@@ -69,13 +69,13 @@ def naca_airfoil_4digits(chord, m, p, t, pitch, sweep, n_points: int = 50):
         theta = np.arctan(dyc_dx)
 
         # Compute the points (upper and lower side of the airfoil)
-        xu = (X_CEN - (x - yt * np.sin(theta))) * chord + sweep
+        xu = (X_CEN - (x - yt * np.sin(theta))) * chord #+ sweep
         yu = (yc + yt * np.cos(theta)) * chord
-        xl = (X_CEN - (x + yt * np.sin(theta))) * chord + sweep
+        xl = (X_CEN - (x + yt * np.sin(theta))) * chord #+ sweep
         yl = (yc - yt * np.cos(theta)) * chord
 
-        points.append([xu* math.cos(pitch) - yu * math.sin(pitch), xu * math.sin(pitch) + yu * math.cos(pitch)])
-        points.insert(0,[xl * math.cos(pitch) - yl * math.sin(pitch), xl * math.sin(pitch) + yl * math.cos(pitch)])
+        points.append([xu* math.cos(pitch) - yu * math.sin(pitch)+ sweep, xu * math.sin(pitch) + yu * math.cos(pitch)])
+        points.insert(0,[xl * math.cos(pitch) - yl * math.sin(pitch)+ sweep, xl * math.sin(pitch) + yl * math.cos(pitch)])
 
         # Remove the first point since it is repeated
         if i == 0:

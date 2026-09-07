@@ -110,7 +110,13 @@ def make_curves(rotor,duct,hub,case_folder):
     file.close()
 
     # blade profiles
+
+    file_sw = open(os.path.join(case_folder,"import_blade.txt"),'w')
+    file_sw.write("Dim swApp As Object\n\nDim Part As Object\nDim boolstatus As Boolean\nDim longstatus As Long, longwarnings As Long\n\nSub main()\n\nSet swApp = Application.SldWorks\n\n"
+                   "Set Part = swApp.ActiveDoc\nDim myModelView As Object\nSet myModelView = Part.ActiveView\nmyModelView.FrameState = swWindowState_e.swWindowMaximized\n")
+
     for i in range(rotor.nr):
+        file_sw.write("Part.InsertCurveFileBegin\n")
         pts = []
         pts = naca_airfoil_4digits(rotor.chord[i],rotor.air_camber[i]/100,0.4,rotor.air_thick[i]/100,rotor.theta[i]*np.pi/180,rotor.sweep[i])
         file = open(os.path.join(case_folder,f"blade_cross_{i}.txt"),'w')
@@ -126,9 +132,16 @@ def make_curves(rotor,duct,hub,case_folder):
             x2 = x #x*math.cos(dspi) - y*math.sin(dspi)
             y2 = y #x*math.sin(dspi) + y*math.cos(dspi)
             file.write(f"{z} {x2} {y2}\n")
-            #file.write(f"{pts[j][1]} {rotor.r[i]*rotor.R_tip} {pts[j][0]}\n")   
+            #file.write(f"{pts[j][1]} {rotor.r[i]*rotor.R_tip} {pts[j][0]}\n") 
+            file_sw.write(f"boolstatus = Part.InsertCurveFilePoint({x2:.5e}, {y2:.5e}, {z:.5e})\n")  
+    
+        file_sw.write("Part.InsertCurveFileEnd\n")
         file.close()    
+    
+    file_sw.write("\nEnd Sub\n")
+    file_sw.close()
 
+    
 def make_discovery_script(rotor,duct,hub,case_folder,blade_lims,istator=False,stator=None):
     
     near_zmax = max(max(hub.xz[:,1]),max(duct.xz[:,1])) + rotor.R_tip/2
