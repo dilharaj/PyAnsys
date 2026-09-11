@@ -428,15 +428,14 @@ def run_cruise_duct_sweep(variables, variables_max, const, case_folder,id,skip_a
             case_folder = os.path.join(parent_folder,f"case{caseID}")
             if not os.path.exists(case_folder):
                 os.makedirs(case_folder)
-                
-    
+
+
             script_file, blade_lims, rotor, stator = run_geo(variables,const,case_folder,id)
 
-            
+
             print("#### script file",script_file)
 
             result = modeler.run_discovery_script_file(file_path=script_file)
-
     variables = copy.deepcopy(variables0)
        
     modeler.close()
@@ -448,7 +447,7 @@ def run_cruise_duct_sweep(variables, variables_max, const, case_folder,id,skip_a
             variables[id.dout_exp] = variables_min[id.dout_exp] + (variables_max[id.dout_exp]-variables_min[id.dout_exp])/(npts_outlet_expansion-1)*i_dout
 
             ivarient = i_din*npts_outlet_expansion + i_dout
-        
+
             caseID = caseID0 + ivarient
             case_folder = os.path.join(parent_folder,f"case{caseID}")
                 
@@ -477,6 +476,9 @@ def run_cruise_duct_sweep(variables, variables_max, const, case_folder,id,skip_a
             print(f"Total Thrust: {T_total:.2f} N\nBlade Thrust: {T_blade:.2f} N\nDuct Thrust: {T_duct:.2f} N\nHub Thrust: {T_hub:.2f} N\nTorque: {Q:.2f} Nm\nRPM: {rpm:.2f} RPM\nMtip: {mtip}\nPower: {P:.2f} W\nFigure of Merit: {FM:.3f}\nDisk Loading: {DL:.2f} kg/m^2\nPower Loading: {PL:.2f} kg/kW\nPropulsive Efficiency: {prop_eff*100:.2f}%\nDuct Share: {duct_share*100:.2f}%")
 
 
+            post_process(rpm, const[id.r], case_folder, rotor.r, rotor.theta)
+
+                
             ## Append to file
 
             ytip = 0 # not calculated in this sweep

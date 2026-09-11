@@ -544,9 +544,9 @@ def read_vol_data(fname):
 
 
 if __name__ == "__main__":
-    rpm = 12326
+    rpm = 10022
     radius = 0.15
-    case_folder = r"Z:\UFX_dilhara\Ansys\3D_CFD_Optimizer\Manual\cases\tx300\case6_duct_sweep\80_ms\case29"
+    case_folder = r"Z:\UFX_dilhara\Ansys\3D_CFD_Optimizer\Manual\cases\tx300\case6_duct_sweep\80_ms\case33"
 
     rr = [0.00, 0.12, 0.22, 0.35, 0.47, 0.58, 0.70, 0.82, 1.00, 1.05]
     rtheta = [100.4, 87.0, 75.0, 63.0, 52.5, 44.0, 39.0, 36.0, 33.0, 32.0]
